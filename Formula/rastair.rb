@@ -5,15 +5,15 @@ class Rastair < Formula
 
   if OS.mac?
     if Hardware::CPU.arm?
-      url "https://s3.eu-west-2.amazonaws.com/com.rastair.releases/build/release-v2.1.0/rastair-v2.1.0-aarch64-apple-darwin.zip"
-      sha256 "def94736d8f77f67afa714bdec30b9edb4b3bdf430438b15d7111bf563e33f50"
+      url "https://s3.eu-west-2.amazonaws.com/com.rastair.releases/build/release-v2.1.1/rastair-v2.1.1-aarch64-apple-darwin.zip"
+      sha256 "3bd110eba50454b2a92cde5888cce5db288e5cc8dcef9fea0614a0b0b1cdcf06"
     else
-      url "https://s3.eu-west-2.amazonaws.com/com.rastair.releases/build/release-v2.1.0/rastair-v2.1.0-x86_64-apple-darwin.zip"
-      sha256 "217a7122987ad4fae4e7ae111944daac06ca54e2057b274ce93cc835188c2f1c"
+      url "https://s3.eu-west-2.amazonaws.com/com.rastair.releases/build/release-v2.1.1/rastair-v2.1.1-x86_64-apple-darwin.zip"
+      sha256 "43e9b2aeb4a7bfce1942707f41fb3307d8264adeac87327418eeafc758b7e352"
     end
   elsif OS.linux?
-    url "https://s3.eu-west-2.amazonaws.com/com.rastair.releases/build/release-v2.1.0/rastair-v2.1.0-x86_64-unknown-linux-gnu.tar.gz"
-    sha256 "4bdfa197ba1d6fc58092598c840ae4947cc6da83aade2898fa50d75456e89a05"
+    url "https://s3.eu-west-2.amazonaws.com/com.rastair.releases/build/release-v2.1.1/rastair-v2.1.1-x86_64-unknown-linux-gnu.tar.gz"
+    sha256 "4dfbab24efad0f524ae6469c122c17d1d307a816e6f8b4af7e9bec24f8823b21"
   end
 
   head do
