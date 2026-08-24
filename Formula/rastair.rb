@@ -1,34 +1,47 @@
 class Rastair < Formula
-  desc "Rust-based command-line tool for genomic data processing"
+  desc "Detect genetic variants and methylation from TAPS+/5-base sequencing data"
   homepage "https://www.rastair.com/"
   license :cannot_represent
 
-  if OS.mac?
-    if Hardware::CPU.arm?
-      url "https://s3.eu-west-2.amazonaws.com/com.rastair.releases/build/release-v2.1.1/rastair-v2.1.1-aarch64-apple-darwin.zip"
-      sha256 "3bd110eba50454b2a92cde5888cce5db288e5cc8dcef9fea0614a0b0b1cdcf06"
-    else
-      url "https://s3.eu-west-2.amazonaws.com/com.rastair.releases/build/release-v2.1.1/rastair-v2.1.1-x86_64-apple-darwin.zip"
-      sha256 "43e9b2aeb4a7bfce1942707f41fb3307d8264adeac87327418eeafc758b7e352"
-    end
-  elsif OS.linux?
-    url "https://s3.eu-west-2.amazonaws.com/com.rastair.releases/build/release-v2.1.1/rastair-v2.1.1-x86_64-unknown-linux-gnu.tar.gz"
-    sha256 "4dfbab24efad0f524ae6469c122c17d1d307a816e6f8b4af7e9bec24f8823b21"
+  # Only non-prerelease tags are picked up; RCs such as v2.2.0-rc.1 are marked
+  # as prereleases by the upstream release workflow and skipped here.
+  livecheck do
+    url :stable
+    strategy :github_latest
   end
 
   head do
-    url "https://bitbucket.org/bsblabludwig/rastair.git", branch: "main"
+    url "https://github.com/bsbludwig/rastair.git", branch: "main"
     depends_on "cmake" => :build
     depends_on "htslib" => :build
     depends_on "libdeflate" => :build
     depends_on "rust" => :build
   end
 
+  on_macos do
+    on_arm do
+      url "https://github.com/bsbludwig/rastair/releases/download/v2.2.0/rastair-v2.2.0-aarch64-apple-darwin.zip"
+      sha256 "6b6d72af39c60cb81f214193475549a94e66e002f7b7e4c73270e5fa6d7bb073"
+    end
+
+    on_intel do
+      url "https://github.com/bsbludwig/rastair/releases/download/v2.2.0/rastair-v2.2.0-x86_64-apple-darwin.zip"
+      sha256 "c4b97ed3b42fdccefb9ad9c67a151d3d544c7657ecf79c82514901d5b5dafb74"
+    end
+  end
+
+  on_linux do
+    on_intel do
+      url "https://github.com/bsbludwig/rastair/releases/download/v2.2.0/rastair-v2.2.0-x86_64-unknown-linux-gnu.tar.gz"
+      sha256 "05c4d82831e92048a1920a84d0839f7b0da0db4a4964b1497c9345550545d22a"
+    end
+  end
+
   def install
     if build.head?
       # Set environment variables so Rust tool finds the Homebrew libraries
-      ENV.prepend_path "PKG_CONFIG_PATH", Formula["htslib"].opt_lib/"pkgconfig"
-      ENV.prepend_path "PKG_CONFIG_PATH", Formula["libdeflate"].opt_lib/"pkgconfig"
+      ENV.prepend_path "PKG_CONFIG_PATH", formula_opt_lib("htslib")/"pkgconfig"
+      ENV.prepend_path "PKG_CONFIG_PATH", formula_opt_lib("libdeflate")/"pkgconfig"
 
       system "cargo", "install", *std_cargo_args
 
@@ -38,18 +51,8 @@ class Rastair < Formula
       pkgshare.install "mbias.R", "QC_report.Rmd"
     end
 
-    # Generate and install shell completions
-    bash_completion_file = buildpath/"rastair.bash"
-    File.write(bash_completion_file, Utils.safe_popen_read(bin/"rastair", "internal", "shell-completions", "bash"))
-    bash_completion.install bash_completion_file
-
-    zsh_completion_file = buildpath/"rastair.zsh"
-    File.write(zsh_completion_file, Utils.safe_popen_read(bin/"rastair", "internal", "shell-completions", "zsh"))
-    zsh_completion.install zsh_completion_file
-
-    fish_completion_file = buildpath/"rastair.fish"
-    File.write(fish_completion_file, Utils.safe_popen_read(bin/"rastair", "internal", "shell-completions", "fish"))
-    fish_completion.install fish_completion_file
+    generate_completions_from_executable(bin/"rastair", "internal", "shell-completions",
+                                         shell_parameter_format: :arg)
   end
 
   test do
