@@ -1,0 +1,54 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  # Lets a release in bsbludwig/rastair (or you, from the Actions tab) confirm
+  # a bumped formula still installs before anyone runs `brew upgrade`.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        # One runner per platform the formula ships a binary for.
+        os: [macos-15, macos-15-intel, ubuntu-24.04]
+    name: brew test-bot (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - name: Set up Homebrew
+        id: set-up-homebrew
+        uses: Homebrew/actions/setup-homebrew@master
+
+      - name: Cache Homebrew bundler gems
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.set-up-homebrew.outputs.gems-path }}
+          key: ${{ runner.os }}-rubygems-${{ steps.set-up-homebrew.outputs.gems-hash }}
+          restore-keys: ${{ runner.os }}-rubygems-
+
+      - run: brew test-bot --only-cleanup-before
+
+      - run: brew test-bot --only-setup
+
+      # `brew style` + `brew readall` over the whole tap. Cheap, always useful.
+      - run: brew test-bot --only-tap-syntax
+
+      # Installs the formula and runs its `test do` block. On a PR test-bot
+      # detects the changed formulae from the diff; a manual run has no diff,
+      # so name the formula explicitly.
+      - run: brew test-bot --only-formulae
+        if: github.event_name == 'pull_request'
+
+      - run: brew test-bot --only-formulae --testing-formulae bsbludwig/rastair/rastair
+        if: github.event_name == 'workflow_dispatch'
